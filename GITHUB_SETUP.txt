@@ -1,0 +1,27 @@
+# GitHub Repository Setup Info
+# Use this when creating your repo on GitHub
+
+REPOSITORY NAME:
+smart-attendance-analyzer
+
+DESCRIPTION:
+📊 A browser-based Student Attendance Tracking & Analytics System built with HTML, CSS, JavaScript and Chart.js. Features 5 pages: Intro, Dashboard, Analytics, Reports & Alerts. No backend required.
+
+TOPICS/TAGS (add these on GitHub):
+html css javascript chartjs attendance-tracker student-management web-application spa frontend single-page-application academic-project btech web-programming
+
+WEBSITE (if deployed on GitHub Pages):
+https://yourusername.github.io/smart-attendance-analyzer
+
+VISIBILITY:
+Public
+
+---
+
+# GitHub Pages Deployment Steps:
+1. Go to your repo → Settings
+2. Scroll to "Pages" section
+3. Under Source → select "main" branch → "/ (root)"
+4. Click Save
+5. Your site will be live at:
+   https://yourusername.github.io/smart-attendance-analyzer
