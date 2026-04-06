@@ -1,0 +1,1285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Smart Attendance Analyzer – Aradhya Saraf Jain</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<style>
+/* ─── TOKENS ─────────────────────────────────────────── */
+:root{
+  --ink:#0a0a12;
+  --ink2:#1a1a2e;
+  --paper:#f5f4ef;
+  --paper2:#eceae0;
+  --neon:#c8f55a;
+  --neon2:#a0e040;
+  --blue:#4f8bff;
+  --red:#ff5252;
+  --amber:#ffb347;
+  --safe-clr:#27c47f;
+  --risk-clr:#f0a500;
+  --crit-clr:#e83a3a;
+  --rad:14px;
+  --font-head:'Syne',sans-serif;
+  --font-body:'DM Sans',sans-serif;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:var(--font-body);
+  background:var(--paper);
+  color:var(--ink);
+  overflow-x:hidden;
+}
+
+/* ─── PAGE SYSTEM ────────────────────────────────────── */
+.page{display:none;min-height:100vh;}
+.page.active{display:block;}
+
+/* ─── SCROLLBAR ──────────────────────────────────────── */
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:var(--paper2);}
+::-webkit-scrollbar-thumb{background:var(--neon);border-radius:99px;}
+
+/* ════════════════════════════════════════════════════════
+   PAGE 0 – INTRO / HERO
+════════════════════════════════════════════════════════ */
+#introPage{
+  background:var(--ink2);
+  position:relative;
+  overflow:hidden;
+  display:none;
+  flex-direction:column;
+}
+#introPage.active{display:flex;}
+
+/* animated grid bg */
+.grid-bg{
+  position:absolute;inset:0;
+  background-image:
+    linear-gradient(rgba(200,245,90,.06) 1px,transparent 1px),
+    linear-gradient(90deg,rgba(200,245,90,.06) 1px,transparent 1px);
+  background-size:60px 60px;
+  animation:gridPan 20s linear infinite;
+}
+@keyframes gridPan{from{transform:translateY(0)}to{transform:translateY(60px)}}
+
+/* glowing blobs */
+.blob{
+  position:absolute;
+  border-radius:50%;
+  filter:blur(90px);
+  opacity:.25;
+  pointer-events:none;
+}
+.blob1{width:600px;height:600px;background:var(--neon);top:-180px;right:-180px;animation:float1 10s ease-in-out infinite;}
+.blob2{width:450px;height:450px;background:var(--blue);bottom:-120px;left:-100px;animation:float2 13s ease-in-out infinite;}
+.blob3{width:300px;height:300px;background:#ff6ec4;top:40%;left:40%;animation:float1 8s ease-in-out infinite reverse;}
+@keyframes float1{0%,100%{transform:translate(0,0)}50%{transform:translate(-30px,30px)}}
+@keyframes float2{0%,100%{transform:translate(0,0)}50%{transform:translate(30px,-25px)}}
+
+/* top bar */
+.top-bar{
+  position:relative;z-index:10;
+  display:flex;justify-content:space-between;align-items:center;
+  padding:22px 44px;
+}
+.logo-badge{
+  font-family:var(--font-head);
+  font-weight:800;
+  font-size:1rem;
+  color:var(--neon);
+  letter-spacing:.15em;
+  text-transform:uppercase;
+  border:1.5px solid var(--neon);
+  padding:6px 16px;
+  border-radius:99px;
+}
+.top-nav{display:flex;gap:10px;}
+.nav-btn{
+  padding:8px 20px;
+  border-radius:99px;
+  border:1.5px solid rgba(255,255,255,.15);
+  background:rgba(255,255,255,.06);
+  color:rgba(255,255,255,.75);
+  font-family:var(--font-body);
+  font-size:.85rem;
+  cursor:pointer;
+  transition:all .25s;
+}
+.nav-btn:hover{border-color:var(--neon);color:var(--neon);background:rgba(200,245,90,.08);}
+.nav-btn.primary{background:var(--neon);color:var(--ink2);border-color:var(--neon);font-weight:600;}
+.nav-btn.primary:hover{background:var(--neon2);}
+
+/* hero center */
+.hero{
+  position:relative;z-index:5;
+  flex:1;
+  display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  padding:40px 20px;
+  text-align:center;
+}
+.eyebrow{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:.78rem;letter-spacing:.2em;text-transform:uppercase;
+  color:var(--neon);
+  border:1px solid rgba(200,245,90,.3);
+  padding:6px 18px;border-radius:99px;
+  background:rgba(200,245,90,.07);
+  margin-bottom:28px;
+  animation:fadeUp .7s .1s both;
+}
+.eyebrow span.dot{
+  width:7px;height:7px;border-radius:50%;
+  background:var(--neon);
+  display:inline-block;
+  animation:blink 1.4s infinite;
+}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.2}}
+
+.hero-name{
+  font-family:var(--font-head);
+  font-size:clamp(2.8rem,7vw,6.2rem);
+  font-weight:800;
+  line-height:1.05;
+  color:#fff;
+  animation:fadeUp .7s .25s both;
+}
+.hero-name .highlight{
+  color:var(--neon);
+  position:relative;
+  display:inline-block;
+}
+.hero-name .highlight::after{
+  content:'';
+  position:absolute;
+  bottom:4px;left:0;right:0;
+  height:4px;
+  background:var(--neon);
+  border-radius:2px;
+  opacity:.5;
+}
+
+.hero-subtitle{
+  margin-top:18px;
+  font-size:clamp(1rem,2.5vw,1.3rem);
+  color:rgba(255,255,255,.5);
+  font-weight:300;
+  letter-spacing:.04em;
+  animation:fadeUp .7s .4s both;
+}
+
+.hero-desc{
+  max-width:560px;
+  margin:24px auto 0;
+  font-size:.98rem;
+  color:rgba(255,255,255,.45);
+  line-height:1.75;
+  animation:fadeUp .7s .55s both;
+}
+
+.hero-cta{
+  margin-top:40px;
+  display:flex;gap:14px;
+  animation:fadeUp .7s .7s both;
+}
+.cta-main{
+  padding:15px 36px;
+  border-radius:99px;
+  border:none;
+  background:var(--neon);
+  color:var(--ink2);
+  font-family:var(--font-head);
+  font-size:1rem;
+  font-weight:700;
+  cursor:pointer;
+  transition:all .25s;
+  display:flex;align-items:center;gap:8px;
+}
+.cta-main:hover{background:var(--neon2);transform:translateY(-2px);box-shadow:0 12px 30px rgba(200,245,90,.35);}
+.cta-ghost{
+  padding:15px 30px;
+  border-radius:99px;
+  border:1.5px solid rgba(255,255,255,.25);
+  background:transparent;
+  color:rgba(255,255,255,.8);
+  font-family:var(--font-head);
+  font-size:1rem;
+  font-weight:600;
+  cursor:pointer;
+  transition:all .25s;
+}
+.cta-ghost:hover{border-color:rgba(255,255,255,.6);color:#fff;}
+
+/* stats row */
+.hero-stats{
+  margin-top:56px;
+  display:flex;gap:32px;
+  animation:fadeUp .7s .85s both;
+}
+.stat-item{
+  text-align:center;
+}
+.stat-item .num{
+  font-family:var(--font-head);
+  font-size:2rem;
+  font-weight:800;
+  color:#fff;
+}
+.stat-item .num span{color:var(--neon);}
+.stat-item .lbl{
+  font-size:.75rem;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:rgba(255,255,255,.35);
+  margin-top:4px;
+}
+.stat-div{width:1px;background:rgba(255,255,255,.1);}
+
+/* feature pills */
+.feature-strip{
+  position:relative;z-index:5;
+  display:flex;justify-content:center;flex-wrap:wrap;gap:10px;
+  padding:0 20px 30px;
+  animation:fadeUp .7s 1s both;
+}
+.feat-pill{
+  display:flex;align-items:center;gap:7px;
+  padding:8px 18px;
+  border-radius:99px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.05);
+  color:rgba(255,255,255,.6);
+  font-size:.8rem;
+  letter-spacing:.04em;
+}
+.feat-pill .ico{font-size:.9rem;}
+
+/* profile card strip */
+.profile-strip{
+  position:relative;z-index:5;
+  display:flex;justify-content:center;gap:16px;flex-wrap:wrap;
+  padding:0 20px 52px;
+  animation:fadeUp .7s 1.1s both;
+}
+.profile-card{
+  background:rgba(255,255,255,.06);
+  border:1px solid rgba(255,255,255,.1);
+  border-radius:14px;
+  padding:16px 24px;
+  color:rgba(255,255,255,.7);
+  font-size:.85rem;
+  display:flex;flex-direction:column;gap:4px;
+  min-width:170px;
+}
+.profile-card .pc-label{font-size:.7rem;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.3);}
+.profile-card .pc-value{font-weight:600;color:#fff;}
+
+/* scroll indicator */
+.scroll-hint{
+  position:absolute;
+  bottom:28px;left:50%;transform:translateX(-50%);
+  z-index:10;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  color:rgba(255,255,255,.25);
+  font-size:.72rem;letter-spacing:.1em;text-transform:uppercase;
+  animation:pulse 2s infinite;
+}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:.9}}
+.scroll-arrow{
+  width:22px;height:32px;border:1.5px solid rgba(255,255,255,.2);
+  border-radius:99px;
+  display:flex;justify-content:center;padding-top:6px;
+}
+.scroll-arrow::before{
+  content:'';width:4px;height:8px;
+  border-radius:2px;background:var(--neon);
+  animation:scrollDot 1.5s infinite;
+}
+@keyframes scrollDot{0%{opacity:0;transform:translateY(0)}50%{opacity:1}100%{opacity:0;transform:translateY(8px)}}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
+
+/* ════════════════════════════════════════════════════════
+   SHARED INNER LAYOUT
+════════════════════════════════════════════════════════ */
+.inner-page{background:var(--paper);min-height:100vh;}
+.inner-nav{
+  background:var(--ink2);
+  display:flex;justify-content:space-between;align-items:center;
+  padding:16px 36px;
+  position:sticky;top:0;z-index:100;
+  border-bottom:1px solid rgba(200,245,90,.1);
+}
+.inner-logo{
+  font-family:var(--font-head);font-weight:800;
+  font-size:1rem;color:var(--neon);letter-spacing:.1em;
+  cursor:pointer;
+}
+.inner-tabs{display:flex;gap:6px;}
+.tab{
+  padding:7px 18px;border-radius:99px;border:none;
+  background:transparent;
+  color:rgba(255,255,255,.45);
+  font-family:var(--font-body);font-size:.85rem;
+  cursor:pointer;transition:all .2s;
+}
+.tab:hover,.tab.active-tab{background:var(--neon);color:var(--ink2);font-weight:600;}
+.back-btn{
+  padding:7px 18px;border-radius:99px;
+  border:1px solid rgba(255,255,255,.2);
+  background:transparent;color:rgba(255,255,255,.6);
+  font-size:.82rem;cursor:pointer;
+  transition:all .2s;
+}
+.back-btn:hover{border-color:var(--neon);color:var(--neon);}
+
+.content-area{max-width:1100px;margin:0 auto;padding:36px 28px;}
+
+.page-title{
+  font-family:var(--font-head);font-weight:800;
+  font-size:clamp(1.5rem,3vw,2.2rem);
+  margin-bottom:6px;
+}
+.page-sub{color:#666;font-size:.93rem;margin-bottom:28px;}
+
+/* ─── SECTION BLOCK ──────────────────────────────────── */
+.block{
+  background:#fff;
+  border-radius:var(--rad);
+  border:1px solid rgba(0,0,0,.07);
+  overflow:hidden;
+  margin-bottom:22px;
+  box-shadow:0 4px 18px rgba(0,0,0,.05);
+}
+.block-head{
+  background:var(--ink2);
+  color:#fff;
+  padding:13px 20px;
+  font-family:var(--font-head);
+  font-size:.88rem;
+  font-weight:700;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  display:flex;align-items:center;gap:8px;
+}
+
+/* ─── DASHBOARD KPIS ─────────────────────────────────── */
+.kpi-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+  gap:16px;padding:20px;
+}
+.kpi{
+  padding:20px;border-radius:12px;
+  text-align:center;
+  position:relative;overflow:hidden;
+}
+.kpi::before{
+  content:'';position:absolute;inset:0;
+  background:linear-gradient(135deg,rgba(255,255,255,.15),transparent);
+}
+.kpi1{background:linear-gradient(135deg,#0a0a12,#1a1a2e);color:#fff;}
+.kpi2{background:linear-gradient(135deg,#1a3a6c,#2a5298);color:#fff;}
+.kpi3{background:linear-gradient(135deg,#7b3f00,#c96d00);color:#fff;}
+.kpi4{background:linear-gradient(135deg,#0d4a2a,#1a8a4a);color:#fff;}
+.kpi5{background:linear-gradient(135deg,#4a0a0a,#8a1a1a);color:#fff;}
+.kpi .kpi-num{
+  font-family:var(--font-head);font-size:2.2rem;font-weight:800;
+  position:relative;z-index:1;
+}
+.kpi .kpi-lbl{font-size:.75rem;opacity:.7;margin-top:4px;position:relative;z-index:1;letter-spacing:.08em;text-transform:uppercase;}
+
+/* ─── FORM ───────────────────────────────────────────── */
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:14px;
+  padding:20px;
+}
+.form-grid .full{grid-column:1/-1;}
+.form-group{display:flex;flex-direction:column;gap:5px;}
+.form-group label{font-size:.78rem;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:#555;}
+.form-group input,
+.form-group select{
+  padding:10px 14px;
+  border:1.5px solid #ddd;
+  border-radius:8px;
+  font-family:var(--font-body);
+  font-size:.93rem;
+  background:#fafafa;
+  transition:border-color .2s;
+  outline:none;
+}
+.form-group input:focus,
+.form-group select:focus{border-color:var(--neon);background:#fff;}
+.subject-row{
+  padding:0 20px 20px;
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;
+}
+.subj-card{
+  background:var(--paper);
+  border-radius:10px;
+  border:1.5px solid #eee;
+  padding:14px;
+  transition:border-color .2s;
+}
+.subj-card:focus-within{border-color:var(--neon);}
+.subj-card .subj-name{
+  font-family:var(--font-head);font-weight:700;font-size:.85rem;
+  margin-bottom:10px;color:var(--ink2);
+  display:flex;align-items:center;gap:6px;
+}
+.subj-ico{font-size:1.1rem;}
+
+.btn-submit{
+  margin:0 20px 20px;
+  padding:13px;width:calc(100% - 40px);
+  border-radius:10px;border:none;
+  background:var(--ink2);
+  color:var(--neon);
+  font-family:var(--font-head);font-size:1rem;font-weight:700;
+  cursor:pointer;transition:all .2s;
+  letter-spacing:.06em;
+}
+.btn-submit:hover{background:#2a2a4e;transform:translateY(-1px);}
+
+/* ─── TABLE ──────────────────────────────────────────── */
+.tbl-wrap{overflow-x:auto;}
+table{width:100%;border-collapse:collapse;}
+thead tr{background:var(--ink2);}
+th{
+  padding:13px 16px;
+  text-align:left;
+  color:rgba(255,255,255,.7);
+  font-family:var(--font-head);font-size:.75rem;
+  font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+}
+tbody tr{border-bottom:1px solid #f0f0f0;transition:background .15s;}
+tbody tr:hover{background:#f9f9f9;}
+td{padding:13px 16px;font-size:.9rem;}
+.badge{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:5px 13px;border-radius:99px;
+  font-size:.75rem;font-weight:700;letter-spacing:.06em;
+}
+.badge-safe{background:#dcfce7;color:#166534;}
+.badge-risk{background:#fef9c3;color:#854d0e;}
+.badge-critical{background:#fee2e2;color:#991b1b;}
+
+.pct-bar{
+  display:flex;align-items:center;gap:8px;
+  font-size:.88rem;font-weight:600;
+}
+.bar-bg{flex:1;height:5px;background:#eee;border-radius:99px;overflow:hidden;}
+.bar-fill{height:100%;border-radius:99px;}
+.bar-safe{background:var(--safe-clr);}
+.bar-risk{background:var(--risk-clr);}
+.bar-critical{background:var(--crit-clr);}
+
+.action-btn{
+  background:none;border:1.5px solid #ddd;border-radius:7px;
+  padding:5px 11px;cursor:pointer;font-size:.78rem;
+  transition:all .2s;color:#555;
+}
+.action-btn:hover{border-color:var(--crit-clr);color:var(--crit-clr);}
+
+/* ─── CHARTS PAGE ────────────────────────────────────── */
+.chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;padding:20px;}
+.chart-grid .full-chart{grid-column:1/-1;}
+.chart-card{
+  background:#fff;border-radius:var(--rad);
+  border:1px solid rgba(0,0,0,.07);
+  padding:20px;
+  box-shadow:0 4px 18px rgba(0,0,0,.05);
+}
+.chart-title{
+  font-family:var(--font-head);font-weight:700;font-size:.95rem;
+  margin-bottom:16px;color:var(--ink2);
+  display:flex;align-items:center;gap:7px;
+}
+canvas{max-width:100%;}
+
+/* ─── REPORT PAGE ────────────────────────────────────── */
+.report-filters{
+  display:flex;gap:12px;flex-wrap:wrap;
+  padding:20px;
+  background:#fff;
+  border-radius:var(--rad);
+  border:1px solid rgba(0,0,0,.07);
+  margin-bottom:20px;
+}
+.filter-select{
+  padding:8px 14px;
+  border:1.5px solid #ddd;border-radius:8px;
+  font-family:var(--font-body);font-size:.88rem;
+  cursor:pointer;outline:none;
+}
+.filter-select:focus{border-color:var(--neon);}
+.filter-btn{
+  padding:8px 20px;border-radius:8px;border:none;
+  background:var(--ink2);color:#fff;
+  font-family:var(--font-body);font-size:.88rem;
+  cursor:pointer;transition:all .2s;
+}
+.filter-btn:hover{background:#2a2a4e;}
+.filter-btn.export{background:var(--safe-clr);color:var(--ink2);}
+
+.report-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(310px,1fr));gap:16px;}
+.student-card{
+  background:#fff;border-radius:var(--rad);
+  border:1px solid rgba(0,0,0,.07);
+  padding:20px;
+  box-shadow:0 4px 18px rgba(0,0,0,.05);
+  transition:transform .2s,box-shadow .2s;
+}
+.student-card:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(0,0,0,.1);}
+.sc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;}
+.sc-name{font-family:var(--font-head);font-weight:700;font-size:1rem;}
+.sc-reg{font-size:.75rem;color:#999;margin-top:2px;}
+.sc-branch{
+  font-size:.72rem;padding:3px 10px;border-radius:99px;
+  background:var(--paper2);font-weight:600;letter-spacing:.06em;
+}
+.subj-row{display:flex;flex-direction:column;gap:7px;margin-top:14px;}
+.subj-line{display:flex;align-items:center;gap:8px;font-size:.82rem;}
+.subj-label{width:70px;color:#777;font-weight:500;}
+.subj-bar-bg{flex:1;height:4px;background:#eee;border-radius:99px;overflow:hidden;}
+.subj-bar-fill{height:100%;border-radius:99px;background:var(--blue);}
+.subj-pct{width:38px;text-align:right;font-weight:700;font-size:.8rem;}
+.sc-footer{
+  margin-top:14px;padding-top:12px;
+  border-top:1px solid #f0f0f0;
+  display:flex;justify-content:space-between;align-items:center;
+}
+.weak-tag{
+  font-size:.72rem;padding:3px 10px;border-radius:99px;
+  background:#fff3cd;color:#856404;font-weight:600;
+}
+.big-pct{font-family:var(--font-head);font-size:1.4rem;font-weight:800;}
+.big-pct.safe{color:var(--safe-clr);}
+.big-pct.risk{color:var(--risk-clr);}
+.big-pct.critical{color:var(--crit-clr);}
+
+/* ─── ALERTS PAGE ────────────────────────────────────── */
+.alert-block{
+  background:#fff;border-radius:var(--rad);
+  border:1px solid rgba(0,0,0,.07);
+  padding:20px;margin-bottom:16px;
+  box-shadow:0 4px 18px rgba(0,0,0,.05);
+  display:flex;gap:16px;align-items:flex-start;
+}
+.alert-icon{
+  font-size:1.6rem;flex-shrink:0;
+  width:44px;height:44px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;
+  background:var(--paper2);
+}
+.alert-body{flex:1;}
+.alert-title{font-family:var(--font-head);font-weight:700;font-size:.95rem;margin-bottom:4px;}
+.alert-desc{font-size:.84rem;color:#666;line-height:1.5;}
+.alert-meta{font-size:.75rem;color:#aaa;margin-top:6px;}
+.alert-badge{
+  padding:5px 14px;border-radius:99px;
+  font-size:.72rem;font-weight:700;
+  flex-shrink:0;align-self:flex-start;
+}
+
+/* empty state */
+.empty-state{
+  text-align:center;padding:60px 20px;
+  color:#aaa;
+}
+.empty-state .ei{font-size:3rem;margin-bottom:12px;}
+.empty-state p{font-size:.95rem;}
+
+/* toast */
+.toast{
+  position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(20px);
+  background:var(--ink2);color:var(--neon);
+  padding:12px 28px;border-radius:99px;
+  font-family:var(--font-head);font-size:.88rem;font-weight:700;
+  opacity:0;transition:all .3s;z-index:9999;pointer-events:none;
+  border:1px solid rgba(200,245,90,.3);
+}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+
+/* responsive */
+@media(max-width:700px){
+  .form-grid,.subject-row,.chart-grid{grid-template-columns:1fr;}
+  .chart-grid .full-chart{grid-column:1;}
+  .hero-stats{gap:18px;}
+  .top-bar{padding:16px 20px;}
+  .content-area{padding:20px 14px;}
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════ PAGE 0: INTRO ══════════ -->
+<div class="page active" id="introPage">
+  <div class="grid-bg"></div>
+  <div class="blob blob1"></div>
+  <div class="blob blob2"></div>
+  <div class="blob blob3"></div>
+
+  <div class="top-bar">
+    <div class="logo-badge">SAA · v2.0</div>
+    <div class="top-nav">
+      <button class="nav-btn" onclick="showPage('dashPage')">Dashboard</button>
+      <button class="nav-btn" onclick="showPage('analyticsPage')">Analytics</button>
+      <button class="nav-btn" onclick="showPage('reportPage')">Reports</button>
+      <button class="nav-btn primary" onclick="showPage('dashPage')">Launch App →</button>
+    </div>
+  </div>
+
+  <div class="hero">
+    <div class="eyebrow"><span class="dot"></span> B.Tech Computer Science · 2025–26</div>
+
+    <h1 class="hero-name">
+      Aradhya<br><span class="highlight">Saraf Jain</span>
+    </h1>
+
+    <p class="hero-subtitle">Smart Attendance Analyzer · Major Project</p>
+
+    <p class="hero-desc">
+      A full-featured academic attendance monitoring platform. Track student presence,
+      identify at-risk learners, visualise subject-wise performance, and generate
+      detailed reports — all in a single intelligent dashboard.
+    </p>
+
+    <div class="hero-cta">
+      <button class="cta-main" onclick="showPage('dashPage')">
+        ⚡ Open Dashboard
+      </button>
+      <button class="cta-ghost" onclick="showPage('reportPage')">
+        View Reports
+      </button>
+    </div>
+
+    <div class="hero-stats">
+      <div class="stat-item">
+        <div class="num"><span id="introTotal">0</span></div>
+        <div class="lbl">Students</div>
+      </div>
+      <div class="stat-div"></div>
+      <div class="stat-item">
+        <div class="num"><span id="introAvg">—</span></div>
+        <div class="lbl">Avg Attendance</div>
+      </div>
+      <div class="stat-div"></div>
+      <div class="stat-item">
+        <div class="num"><span id="introCrit">0</span></div>
+        <div class="lbl">Critical</div>
+      </div>
+      <div class="stat-div"></div>
+      <div class="stat-item">
+        <div class="num">3</div>
+        <div class="lbl">Subjects</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="feature-strip">
+    <div class="feat-pill"><span class="ico">📊</span> Real-time Dashboard</div>
+    <div class="feat-pill"><span class="ico">🎯</span> Status Badges</div>
+    <div class="feat-pill"><span class="ico">📈</span> Multi-chart Analytics</div>
+    <div class="feat-pill"><span class="ico">🔎</span> Branch Filtering</div>
+    <div class="feat-pill"><span class="ico">⚠️</span> Smart Alerts</div>
+    <div class="feat-pill"><span class="ico">🗂️</span> Student Cards</div>
+    <div class="feat-pill"><span class="ico">💾</span> CSV Export</div>
+  </div>
+
+  <div class="profile-strip">
+    <div class="profile-card">
+      <span class="pc-label">Student</span>
+      <span class="pc-value">Aradhya Saraf Jain</span>
+    </div>
+    <div class="profile-card">
+      <span class="pc-label">Program</span>
+      <span class="pc-value">B.Tech – CSE</span>
+    </div>
+    <div class="profile-card">
+      <span class="pc-label">Project Type</span>
+      <span class="pc-value">Web Application</span>
+    </div>
+    <div class="profile-card">
+      <span class="pc-label">Tech Stack</span>
+      <span class="pc-value">HTML · CSS · JS · Chart.js</span>
+    </div>
+    <div class="profile-card">
+      <span class="pc-label">Academic Year</span>
+      <span class="pc-value">2025 – 26</span>
+    </div>
+  </div>
+
+  <div class="scroll-hint">
+    <div class="scroll-arrow"></div>
+    scroll
+  </div>
+</div>
+
+<!-- ══════════ INNER NAV TEMPLATE (injected per page) ══════════ -->
+
+<!-- ══════════ PAGE 1: DASHBOARD ══════════ -->
+<div class="page inner-page" id="dashPage">
+  <nav class="inner-nav">
+    <div class="inner-logo" onclick="showPage('introPage')">SAA</div>
+    <div class="inner-tabs">
+      <button class="tab active-tab" onclick="showPage('dashPage')">Dashboard</button>
+      <button class="tab" onclick="showPage('analyticsPage')">Analytics</button>
+      <button class="tab" onclick="showPage('reportPage')">Reports</button>
+      <button class="tab" onclick="showPage('alertsPage')">Alerts</button>
+    </div>
+    <button class="back-btn" onclick="showPage('introPage')">← Home</button>
+  </nav>
+
+  <div class="content-area">
+    <div class="page-title">Dashboard</div>
+    <div class="page-sub">Add students and monitor attendance at a glance</div>
+
+    <!-- KPIs -->
+    <div class="block">
+      <div class="block-head">📊 Overview</div>
+      <div class="kpi-grid">
+        <div class="kpi kpi1">
+          <div class="kpi-num" id="kpiTotal">0</div>
+          <div class="kpi-lbl">Total Students</div>
+        </div>
+        <div class="kpi kpi2">
+          <div class="kpi-num" id="kpiAvg">—</div>
+          <div class="kpi-lbl">Average %</div>
+        </div>
+        <div class="kpi kpi4">
+          <div class="kpi-num" id="kpiSafe">0</div>
+          <div class="kpi-lbl">Safe</div>
+        </div>
+        <div class="kpi kpi3">
+          <div class="kpi-num" id="kpiRisk">0</div>
+          <div class="kpi-lbl">At Risk</div>
+        </div>
+        <div class="kpi kpi5">
+          <div class="kpi-num" id="kpiCrit">0</div>
+          <div class="kpi-lbl">Critical</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Add Student Form -->
+    <div class="block">
+      <div class="block-head">➕ Add Student</div>
+      <div class="form-grid" id="studentForm">
+        <div class="form-group">
+          <label>Registration No.</label>
+          <input id="fRegno" placeholder="e.g. 21CS001">
+        </div>
+        <div class="form-group">
+          <label>Student Name</label>
+          <input id="fName" placeholder="Full name">
+        </div>
+        <div class="form-group">
+          <label>Branch</label>
+          <select id="fBranch">
+            <option value="">Select Branch</option>
+            <option>CSE</option><option>IT</option>
+            <option>ECE</option><option>EEE</option><option>ME</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Year</label>
+          <select id="fYear">
+            <option value="">Select Year</option>
+            <option>1st Year</option><option>2nd Year</option>
+            <option>3rd Year</option><option>4th Year</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="subject-row">
+        <div class="subj-card">
+          <div class="subj-name"><span class="subj-ico">➕</span> Mathematics</div>
+          <div class="form-group"><label>Total Classes</label><input id="mT" type="number" min="0" placeholder="e.g. 60"></div>
+          <div class="form-group"><label>Attended</label><input id="mA" type="number" min="0" placeholder="e.g. 50"></div>
+        </div>
+        <div class="subj-card">
+          <div class="subj-name"><span class="subj-ico">⚛️</span> Physics</div>
+          <div class="form-group"><label>Total Classes</label><input id="pT" type="number" min="0" placeholder="e.g. 55"></div>
+          <div class="form-group"><label>Attended</label><input id="pA" type="number" min="0" placeholder="e.g. 42"></div>
+        </div>
+        <div class="subj-card">
+          <div class="subj-name"><span class="subj-ico">💻</span> Computer Science</div>
+          <div class="form-group"><label>Total Classes</label><input id="cT" type="number" min="0" placeholder="e.g. 70"></div>
+          <div class="form-group"><label>Attended</label><input id="cA" type="number" min="0" placeholder="e.g. 65"></div>
+        </div>
+      </div>
+
+      <button class="btn-submit" onclick="addStudent()">Add Student to Records</button>
+    </div>
+
+    <!-- Records Table -->
+    <div class="block">
+      <div class="block-head">📋 Student Records
+        <span style="margin-left:auto;display:flex;gap:8px;">
+          <input id="searchBox" placeholder="🔍 Search…" style="padding:5px 12px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-size:.8rem;width:160px;" oninput="renderTable()">
+          <select id="filterBranch" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-size:.8rem;" onchange="renderTable()">
+            <option value="">All Branches</option>
+            <option>CSE</option><option>IT</option><option>ECE</option><option>EEE</option><option>ME</option>
+          </select>
+          <select id="filterStatus" style="padding:5px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.1);color:#fff;font-size:.8rem;" onchange="renderTable()">
+            <option value="">All Status</option>
+            <option>Safe</option><option>Risk</option><option>Critical</option>
+          </select>
+        </span>
+      </div>
+      <div class="tbl-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Reg No</th><th>Name</th><th>Branch</th><th>Year</th>
+              <th>Math</th><th>Physics</th><th>CS</th>
+              <th>Overall</th><th>Weak Subject</th><th>Status</th><th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="recordTable"></tbody>
+        </table>
+        <div id="emptyTable" class="empty-state" style="display:none">
+          <div class="ei">📭</div>
+          <p>No students yet. Add one above!</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PAGE 2: ANALYTICS ══════════ -->
+<div class="page inner-page" id="analyticsPage">
+  <nav class="inner-nav">
+    <div class="inner-logo" onclick="showPage('introPage')">SAA</div>
+    <div class="inner-tabs">
+      <button class="tab" onclick="showPage('dashPage')">Dashboard</button>
+      <button class="tab active-tab" onclick="showPage('analyticsPage')">Analytics</button>
+      <button class="tab" onclick="showPage('reportPage')">Reports</button>
+      <button class="tab" onclick="showPage('alertsPage')">Alerts</button>
+    </div>
+    <button class="back-btn" onclick="showPage('introPage')">← Home</button>
+  </nav>
+
+  <div class="content-area">
+    <div class="page-title">Analytics</div>
+    <div class="page-sub">Visual breakdown of attendance across students and subjects</div>
+
+    <div class="chart-grid">
+      <div class="chart-card full-chart">
+        <div class="chart-title">📊 Overall Attendance per Student (%)</div>
+        <canvas id="barChart" height="90"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">🥧 Status Distribution</div>
+        <canvas id="pieChart" height="200"></canvas>
+      </div>
+      <div class="chart-card">
+        <div class="chart-title">📚 Subject-wise Average (%)</div>
+        <canvas id="radarChart" height="200"></canvas>
+      </div>
+      <div class="chart-card full-chart">
+        <div class="chart-title">📉 Subject Comparison per Student</div>
+        <canvas id="groupedBar" height="100"></canvas>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PAGE 3: REPORTS ══════════ -->
+<div class="page inner-page" id="reportPage">
+  <nav class="inner-nav">
+    <div class="inner-logo" onclick="showPage('introPage')">SAA</div>
+    <div class="inner-tabs">
+      <button class="tab" onclick="showPage('dashPage')">Dashboard</button>
+      <button class="tab" onclick="showPage('analyticsPage')">Analytics</button>
+      <button class="tab active-tab" onclick="showPage('reportPage')">Reports</button>
+      <button class="tab" onclick="showPage('alertsPage')">Alerts</button>
+    </div>
+    <button class="back-btn" onclick="showPage('introPage')">← Home</button>
+  </nav>
+
+  <div class="content-area">
+    <div class="page-title">Student Reports</div>
+    <div class="page-sub">Detailed per-student attendance cards with subject breakdown</div>
+
+    <div class="report-filters">
+      <select class="filter-select" id="rFilterBranch" onchange="renderReports()">
+        <option value="">All Branches</option>
+        <option>CSE</option><option>IT</option><option>ECE</option><option>EEE</option><option>ME</option>
+      </select>
+      <select class="filter-select" id="rFilterStatus" onchange="renderReports()">
+        <option value="">All Status</option>
+        <option>Safe</option><option>Risk</option><option>Critical</option>
+      </select>
+      <select class="filter-select" id="rSortBy" onchange="renderReports()">
+        <option value="name">Sort by Name</option>
+        <option value="asc">Sort by % (Low → High)</option>
+        <option value="desc">Sort by % (High → Low)</option>
+      </select>
+      <button class="filter-btn export" onclick="exportCSV()">⬇ Export CSV</button>
+    </div>
+
+    <div class="report-grid" id="reportGrid">
+      <div class="empty-state">
+        <div class="ei">📭</div>
+        <p>No students added yet.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ PAGE 4: ALERTS ══════════ -->
+<div class="page inner-page" id="alertsPage">
+  <nav class="inner-nav">
+    <div class="inner-logo" onclick="showPage('introPage')">SAA</div>
+    <div class="inner-tabs">
+      <button class="tab" onclick="showPage('dashPage')">Dashboard</button>
+      <button class="tab" onclick="showPage('analyticsPage')">Analytics</button>
+      <button class="tab" onclick="showPage('reportPage')">Reports</button>
+      <button class="tab active-tab" onclick="showPage('alertsPage')">Alerts</button>
+    </div>
+    <button class="back-btn" onclick="showPage('introPage')">← Home</button>
+  </nav>
+
+  <div class="content-area">
+    <div class="page-title">Alerts & Warnings</div>
+    <div class="page-sub">Students requiring immediate attention or monitoring</div>
+    <div id="alertsList">
+      <div class="empty-state">
+        <div class="ei">✅</div>
+        <p>No alerts. Add students to detect issues.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast"></div>
+
+<!-- ══════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════ -->
+<script>
+/* ── DATA ─────────────────────────────────────── */
+let students = [];
+let charts = {};
+
+/* ── PAGE ROUTING ─────────────────────────────── */
+function showPage(id){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  if(id==='analyticsPage') setTimeout(buildCharts,100);
+  if(id==='reportPage')    renderReports();
+  if(id==='alertsPage')    renderAlerts();
+  updateIntroStats();
+  window.scrollTo(0,0);
+}
+
+/* ── TOAST ────────────────────────────────────── */
+function toast(msg){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'),2400);
+}
+
+/* ── ADD STUDENT ──────────────────────────────── */
+function addStudent(){
+  const regno=document.getElementById('fRegno').value.trim();
+  const name=document.getElementById('fName').value.trim();
+  const branch=document.getElementById('fBranch').value;
+  const year=document.getElementById('fYear').value;
+  const mT=+document.getElementById('mT').value;
+  const mA=+document.getElementById('mA').value;
+  const pT=+document.getElementById('pT').value;
+  const pA=+document.getElementById('pA').value;
+  const cT=+document.getElementById('cT').value;
+  const cA=+document.getElementById('cA').value;
+
+  if(!regno||!name||!branch||!year){toast('⚠️ Please fill all fields');return;}
+  if(!mT||!pT||!cT){toast('⚠️ Total classes cannot be 0');return;}
+  if(mA>mT||pA>pT||cA>cT){toast('⚠️ Attended cannot exceed total');return;}
+
+  const math=+(mA/mT*100).toFixed(1);
+  const phys=+(pA/pT*100).toFixed(1);
+  const cs=+(cA/cT*100).toFixed(1);
+  const overall=+((math+phys+cs)/3).toFixed(1);
+
+  const subjects={Math:math,Physics:phys,CS:cs};
+  const weak=Object.keys(subjects).reduce((a,b)=>subjects[a]<subjects[b]?a:b);
+
+  let status='Safe',cls='safe';
+  if(overall<60){status='Critical';cls='critical';}
+  else if(overall<75){status='Risk';cls='risk';}
+
+  students.push({regno,name,branch,year,math,phys,cs,overall,weak,status,cls,id:Date.now()});
+
+  // clear form
+  ['fRegno','fName','mT','mA','pT','pA','cT','cA'].forEach(i=>document.getElementById(i).value='');
+  document.getElementById('fBranch').value='';
+  document.getElementById('fYear').value='';
+
+  renderTable();updateKPIs();updateIntroStats();
+  toast(`✅ ${name} added successfully!`);
+}
+
+/* ── DELETE STUDENT ───────────────────────────── */
+function deleteStudent(id){
+  students=students.filter(s=>s.id!==id);
+  renderTable();updateKPIs();updateIntroStats();
+  toast('🗑️ Student removed');
+}
+
+/* ── TABLE ────────────────────────────────────── */
+function renderTable(){
+  const search=document.getElementById('searchBox').value.toLowerCase();
+  const fb=document.getElementById('filterBranch').value;
+  const fs=document.getElementById('filterStatus').value;
+
+  let list=students.filter(s=>{
+    if(fb && s.branch!==fb) return false;
+    if(fs && s.status!==fs) return false;
+    if(search && !s.name.toLowerCase().includes(search) && !s.regno.toLowerCase().includes(search)) return false;
+    return true;
+  });
+
+  const tbody=document.getElementById('recordTable');
+  const empty=document.getElementById('emptyTable');
+  if(list.length===0){tbody.innerHTML='';empty.style.display='block';return;}
+  empty.style.display='none';
+
+  tbody.innerHTML=list.map(s=>{
+    const barCls=s.cls==='safe'?'bar-safe':s.cls==='risk'?'bar-risk':'bar-critical';
+    return `<tr>
+      <td><b>${s.regno}</b></td>
+      <td>${s.name}</td>
+      <td>${s.branch}</td>
+      <td>${s.year}</td>
+      <td>${s.math}%</td>
+      <td>${s.phys}%</td>
+      <td>${s.cs}%</td>
+      <td>
+        <div class="pct-bar">
+          <span>${s.overall}%</span>
+          <div class="bar-bg"><div class="bar-fill ${barCls}" style="width:${s.overall}%"></div></div>
+        </div>
+      </td>
+      <td>${s.weak}</td>
+      <td><span class="badge badge-${s.cls}">${s.status}</span></td>
+      <td><button class="action-btn" onclick="deleteStudent(${s.id})">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ── KPI UPDATE ───────────────────────────────── */
+function updateKPIs(){
+  document.getElementById('kpiTotal').textContent=students.length;
+  const avg=students.length?(students.reduce((a,b)=>a+b.overall,0)/students.length).toFixed(1)+'%':'—';
+  document.getElementById('kpiAvg').textContent=avg;
+  document.getElementById('kpiSafe').textContent=students.filter(s=>s.status==='Safe').length;
+  document.getElementById('kpiRisk').textContent=students.filter(s=>s.status==='Risk').length;
+  document.getElementById('kpiCrit').textContent=students.filter(s=>s.status==='Critical').length;
+}
+
+function updateIntroStats(){
+  document.getElementById('introTotal').textContent=students.length;
+  document.getElementById('introAvg').textContent=students.length
+    ?(students.reduce((a,b)=>a+b.overall,0)/students.length).toFixed(1)+'%':'—';
+  document.getElementById('introCrit').textContent=students.filter(s=>s.status==='Critical').length;
+}
+
+/* ── CHARTS ───────────────────────────────────── */
+const CHART_OPTS={responsive:true,plugins:{legend:{labels:{color:'#333',font:{family:'DM Sans'}}}}};
+
+function destroyChart(key){if(charts[key]){charts[key].destroy();delete charts[key];}}
+
+function buildCharts(){
+  if(students.length===0){
+    ['barChart','pieChart','radarChart','groupedBar'].forEach(id=>{
+      const ctx=document.getElementById(id);
+      if(ctx){const c=ctx.getContext('2d');c.clearRect(0,0,ctx.width,ctx.height);}
+    });
+    return;
+  }
+
+  // Bar
+  destroyChart('bar');
+  charts['bar']=new Chart(document.getElementById('barChart').getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:students.map(s=>s.name),
+      datasets:[{
+        label:'Overall %',
+        data:students.map(s=>s.overall),
+        backgroundColor:students.map(s=>s.cls==='safe'?'#27c47f':s.cls==='risk'?'#f0a500':'#e83a3a'),
+        borderRadius:8
+      }]
+    },
+    options:{...CHART_OPTS,scales:{y:{beginAtZero:true,max:100,ticks:{color:'#555'},grid:{color:'#f0f0f0'}}}}
+  });
+
+  // Pie
+  const safe=students.filter(s=>s.status==='Safe').length;
+  const risk=students.filter(s=>s.status==='Risk').length;
+  const crit=students.filter(s=>s.status==='Critical').length;
+  destroyChart('pie');
+  charts['pie']=new Chart(document.getElementById('pieChart').getContext('2d'),{
+    type:'doughnut',
+    data:{
+      labels:['Safe','At Risk','Critical'],
+      datasets:[{data:[safe,risk,crit],backgroundColor:['#27c47f','#f0a500','#e83a3a'],borderWidth:0,hoverOffset:8}]
+    },
+    options:{...CHART_OPTS,cutout:'65%'}
+  });
+
+  // Radar
+  const avgMath=(students.reduce((a,b)=>a+b.math,0)/students.length).toFixed(1);
+  const avgPhys=(students.reduce((a,b)=>a+b.phys,0)/students.length).toFixed(1);
+  const avgCS=(students.reduce((a,b)=>a+b.cs,0)/students.length).toFixed(1);
+  destroyChart('radar');
+  charts['radar']=new Chart(document.getElementById('radarChart').getContext('2d'),{
+    type:'radar',
+    data:{
+      labels:['Mathematics','Physics','Computer Science'],
+      datasets:[{
+        label:'Avg %',
+        data:[avgMath,avgPhys,avgCS],
+        backgroundColor:'rgba(79,139,255,0.2)',
+        borderColor:'#4f8bff',
+        pointBackgroundColor:'#4f8bff',
+        borderWidth:2
+      }]
+    },
+    options:{...CHART_OPTS,scales:{r:{beginAtZero:true,max:100,ticks:{color:'#555'},grid:{color:'#e0e0e0'}}}}
+  });
+
+  // Grouped Bar
+  destroyChart('grouped');
+  charts['grouped']=new Chart(document.getElementById('groupedBar').getContext('2d'),{
+    type:'bar',
+    data:{
+      labels:students.map(s=>s.name),
+      datasets:[
+        {label:'Math',data:students.map(s=>s.math),backgroundColor:'#4f8bff',borderRadius:5},
+        {label:'Physics',data:students.map(s=>s.phys),backgroundColor:'#c8f55a',borderRadius:5},
+        {label:'CS',data:students.map(s=>s.cs),backgroundColor:'#ff6ec4',borderRadius:5}
+      ]
+    },
+    options:{...CHART_OPTS,scales:{y:{beginAtZero:true,max:100,ticks:{color:'#555'},grid:{color:'#f0f0f0'}}}}
+  });
+}
+
+/* ── REPORTS ──────────────────────────────────── */
+function renderReports(){
+  const fb=document.getElementById('rFilterBranch').value;
+  const fs=document.getElementById('rFilterStatus').value;
+  const sort=document.getElementById('rSortBy').value;
+  const grid=document.getElementById('reportGrid');
+
+  let list=[...students];
+  if(fb) list=list.filter(s=>s.branch===fb);
+  if(fs) list=list.filter(s=>s.status===fs);
+  if(sort==='asc') list.sort((a,b)=>a.overall-b.overall);
+  else if(sort==='desc') list.sort((a,b)=>b.overall-a.overall);
+  else list.sort((a,b)=>a.name.localeCompare(b.name));
+
+  if(list.length===0){
+    grid.innerHTML='<div class="empty-state"><div class="ei">📭</div><p>No matching students.</p></div>';
+    return;
+  }
+
+  grid.innerHTML=list.map(s=>`
+    <div class="student-card">
+      <div class="sc-header">
+        <div>
+          <div class="sc-name">${s.name}</div>
+          <div class="sc-reg">${s.regno} · ${s.year}</div>
+        </div>
+        <div>
+          <span class="sc-branch">${s.branch}</span>
+        </div>
+      </div>
+      <div class="subj-row">
+        ${subjLine('Math',s.math)}
+        ${subjLine('Physics',s.phys)}
+        ${subjLine('CS',s.cs)}
+      </div>
+      <div class="sc-footer">
+        <span class="badge badge-${s.cls}">${s.status}</span>
+        <span class="weak-tag">⚠️ Weak: ${s.weak}</span>
+        <span class="big-pct ${s.cls}">${s.overall}%</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+function subjLine(label,pct){
+  const clr=pct>=75?'#27c47f':pct>=60?'#f0a500':'#e83a3a';
+  return `<div class="subj-line">
+    <span class="subj-label">${label}</span>
+    <div class="subj-bar-bg"><div class="subj-bar-fill" style="width:${pct}%;background:${clr}"></div></div>
+    <span class="subj-pct" style="color:${clr}">${pct}%</span>
+  </div>`;
+}
+
+/* ── ALERTS ───────────────────────────────────── */
+function renderAlerts(){
+  const list=document.getElementById('alertsList');
+  const crit=students.filter(s=>s.status==='Critical');
+  const risk=students.filter(s=>s.status==='Risk');
+
+  if(crit.length===0 && risk.length===0){
+    list.innerHTML='<div class="empty-state"><div class="ei">✅</div><p>No alerts. All students are in good standing or no data yet.</p></div>';
+    return;
+  }
+
+  let html='';
+  crit.forEach(s=>{
+    html+=`<div class="alert-block">
+      <div class="alert-icon">🚨</div>
+      <div class="alert-body">
+        <div class="alert-title">${s.name} — Critical Attendance</div>
+        <div class="alert-desc">Overall attendance is <b>${s.overall}%</b>, below the minimum threshold of 60%. 
+          Weakest subject: <b>${s.weak}</b>. Immediate intervention recommended.</div>
+        <div class="alert-meta">${s.regno} · ${s.branch} · ${s.year}</div>
+      </div>
+      <span class="alert-badge badge badge-critical">Critical</span>
+    </div>`;
+  });
+  risk.forEach(s=>{
+    html+=`<div class="alert-block">
+      <div class="alert-icon">⚠️</div>
+      <div class="alert-body">
+        <div class="alert-title">${s.name} — At Risk</div>
+        <div class="alert-desc">Overall attendance is <b>${s.overall}%</b>, between 60–74%. 
+          Weak in <b>${s.weak}</b>. Monitor closely to prevent dropping to critical.</div>
+        <div class="alert-meta">${s.regno} · ${s.branch} · ${s.year}</div>
+      </div>
+      <span class="alert-badge badge badge-risk">At Risk</span>
+    </div>`;
+  });
+  list.innerHTML=html;
+}
+
+/* ── CSV EXPORT ───────────────────────────────── */
+function exportCSV(){
+  if(!students.length){toast('⚠️ No data to export');return;}
+  const header='Reg No,Name,Branch,Year,Math%,Physics%,CS%,Overall%,Weak Subject,Status';
+  const rows=students.map(s=>`${s.regno},${s.name},${s.branch},${s.year},${s.math},${s.phys},${s.cs},${s.overall},${s.weak},${s.status}`);
+  const csv=[header,...rows].join('\n');
+  const a=document.createElement('a');
+  a.href='data:text/csv;charset=utf-8,'+encodeURIComponent(csv);
+  a.download='attendance_report.csv';
+  a.click();
+  toast('📥 CSV exported!');
+}
+</script>
+</body>
+</html>
